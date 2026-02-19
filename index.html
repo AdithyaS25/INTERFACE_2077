@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>INTERFACE_2077 — The Sentient Protocol</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;900&family=Rajdhani:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body data-bias="neutral" data-omega-visits="0">
+
+  <!-- Global scanlines + grid (always present) -->
+  <div class="scanlines" aria-hidden="true"></div>
+  <div class="bg-grid" aria-hidden="true"></div>
+
+  <!-- ============================================================
+       LAYER 1 — LOGIN SCREEN
+       ============================================================ -->
+  <div id="login-screen" class="auth-screen">
+
+    <!-- Top corner decorations -->
+    <div class="corner tl"></div>
+    <div class="corner tr"></div>
+    <div class="corner bl"></div>
+    <div class="corner br"></div>
+
+    <!-- Floating particle field -->
+    <canvas id="particle-canvas"></canvas>
+
+    <div class="auth-box">
+
+      <!-- Header -->
+      <div class="auth-logo-row">
+        <div class="auth-omega-glyph">Ω</div>
+        <div class="auth-logo-text">
+          <div class="auth-title">INTERFACE_2077</div>
+          <div class="auth-subtitle">THE SENTIENT PROTOCOL — NEO-BANGALORE CONTROL GRID</div>
+        </div>
+      </div>
+
+      <div class="auth-divider"></div>
+
+      <!-- Status line -->
+      <div class="auth-status-row">
+        <span class="auth-dot pulse"></span>
+        <span class="auth-status-text" id="auth-status-text">NEURAL MESH ACTIVE — AWAITING AUTHORIZATION</span>
+      </div>
+
+      <!-- Form -->
+      <div class="auth-form">
+        <div class="auth-field">
+          <label class="auth-label">AGENT IDENTIFIER</label>
+          <div class="auth-input-wrap">
+            <span class="auth-input-prefix">▶</span>
+            <input
+              type="text"
+              id="login-agent"
+              class="auth-input"
+              placeholder="AGENT ID (e.g. NX7K2)"
+              maxlength="5"
+              autocomplete="off"
+              spellcheck="false"
+            />
+          </div>
+          <div class="auth-field-hint">Alphanumeric · Max 5 characters</div>
+        </div>
+
+        <div class="auth-field">
+          <label class="auth-label">ACCESS PASSKEY</label>
+          <div class="auth-input-wrap">
+            <span class="auth-input-prefix">▶</span>
+            <input
+              type="password"
+              id="login-passkey"
+              class="auth-input"
+              placeholder="ENTER PASSKEY"
+              maxlength="12"
+              autocomplete="off"
+            />
+          </div>
+          <div class="auth-field-hint">Classified — do not share on open channels</div>
+        </div>
+
+        <!-- Attempts indicator -->
+        <div class="auth-attempts-row">
+          <span class="auth-attempts-label">ATTEMPTS REMAINING:</span>
+          <span class="auth-attempts-val" id="attempts-remaining">2</span>
+          <div class="attempt-pips">
+            <div class="pip active" id="pip-1"></div>
+            <div class="pip active" id="pip-2"></div>
+          </div>
+        </div>
+
+        <button class="auth-btn" id="auth-submit">
+          <span class="auth-btn-icon">⟶</span>
+          AUTHORIZE ACCESS
+        </button>
+      </div>
+
+      <!-- Warning dialog (hidden by default) -->
+      <div id="auth-warning" class="auth-warning hidden">
+        <div class="auth-warning-icon">⚠</div>
+        <div class="auth-warning-title" id="auth-warning-title">ACCESS DENIED</div>
+        <div class="auth-warning-sub" id="auth-warning-sub">Credentials do not match authorized personnel registry.</div>
+        <button class="auth-warning-close" id="auth-warning-close">ACKNOWLEDGE</button>
+      </div>
+
+      <!-- Lockout panel (hidden) -->
+      <div id="auth-lockout" class="auth-lockout hidden">
+        <div class="lockout-glyph">⛔</div>
+        <div class="lockout-title">SECURITY BREACH DETECTED</div>
+        <div class="lockout-sub">Maximum authentication attempts exceeded. A security alert has been dispatched to Neo-Bangalore Central Security Command. Your neural signature, IP trace, and biometric hash have been logged and flagged for investigation. This terminal is now locked.</div>
+        <div class="lockout-id" id="lockout-id">INCIDENT REF: NB-SEC-----</div>
+      </div>
+
+      <div class="auth-footer">
+        <span>INTERFACE_2077 · GOVERNED PERSONNEL ONLY</span>
+        <span>UNAUTHORIZED ACCESS IS A FELONY UNDER NB-ACT-7 §2077</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       LAYER 2 — BOOT SEQUENCE SCREEN
+       ============================================================ -->
+  <div id="boot-screen" class="boot-screen hidden">
+
+    <div class="boot-header">
+      <div class="boot-logo">○ INTERFACE_2077 ○</div>
+    </div>
+
+    <div class="boot-console" id="boot-console">
+      <!-- Lines typed by JS -->
+    </div>
+
+    <div class="boot-progress-wrap">
+      <div class="boot-progress-track">
+        <div class="boot-progress-fill" id="boot-progress-fill"></div>
+      </div>
+      <div class="boot-progress-label" id="boot-progress-label">0%</div>
+    </div>
+
+    <div class="boot-agent-badge" id="boot-agent-badge">
+      <!-- Filled by JS -->
+    </div>
+  </div>
+
+  <!-- ============================================================
+       LAYER 3 — MAIN APP (hidden until boot completes)
+       ============================================================ -->
+  <div id="main-app" class="hidden">
+
+    <!-- Warning Overlay -->
+    <div id="warning-overlay" class="overlay hidden" role="dialog" aria-modal="true">
+      <div class="overlay-content">
+        <div class="overlay-icon pulse-ring">⚠</div>
+        <div class="overlay-title typing-text" id="overlay-title">SYSTEM STABILITY PRESERVED</div>
+        <div class="overlay-sub" id="overlay-sub">Authoritarian parameters detected. Citizens flagged for re-evaluation.</div>
+        <div class="overlay-bar"><div class="overlay-bar-fill"></div></div>
+        <button class="btn-dismiss" id="overlay-dismiss">ACKNOWLEDGE &amp; CONTINUE</button>
+      </div>
+    </div>
+
+    <!-- Omega Overlay -->
+    <div id="omega-overlay" class="overlay hidden omega-overlay" role="dialog" aria-modal="true">
+      <div class="overlay-content omega-content">
+        <div class="omega-glyph">Ω</div>
+        <div class="overlay-title" id="omega-overlay-title">OMEGA AWARE OF USER BEHAVIOR</div>
+        <div class="overlay-sub" id="omega-overlay-sub">Your behavioral pattern has been catalogued. Every interaction refines my model of you.</div>
+        <button class="btn-dismiss omega-dismiss" id="omega-dismiss">ENTER THE CORE</button>
+      </div>
+    </div>
+
+    <!-- App Shell -->
+    <div id="app">
+
+      <!-- Sidebar -->
+      <aside id="sidebar" class="sidebar">
+        <div class="sidebar-header">
+          <div class="logo">
+            <span class="logo-omega">Ω</span>
+            <div class="logo-text">
+              <div class="logo-title">INTERFACE</div>
+              <div class="logo-year">2077</div>
+            </div>
+          </div>
+          <button class="hamburger" id="hamburger" aria-label="Toggle menu">
+            <span></span><span></span><span></span>
+          </button>
+        </div>
+
+        <div class="sidebar-status">
+          <div class="status-dot pulse"></div>
+          <span id="sidebar-greeting">SYSTEM ONLINE</span>
+        </div>
+
+        <!-- Agent identity strip -->
+        <div class="sidebar-agent-strip" id="sidebar-agent-strip">
+          <div class="sas-label">AUTHORIZED AGENT</div>
+          <div class="sas-name" id="sas-name">--</div>
+          <div class="sas-role" id="sas-role">--</div>
+        </div>
+
+        <nav class="sidebar-nav" id="sidebar-nav">
+          <a href="#" class="nav-item active" data-section="dashboard">
+            <span class="nav-icon">◈</span>
+            <span class="nav-label">Dashboard</span>
+          </a>
+          <a href="#" class="nav-item" data-section="citizen-mapping">
+            <span class="nav-icon">◉</span>
+            <span class="nav-label">Citizen Mapping</span>
+          </a>
+          <a href="#" class="nav-item" data-section="governance">
+            <span class="nav-icon">⊛</span>
+            <span class="nav-label">Ethical Governance</span>
+          </a>
+          <a href="#" class="nav-item" data-section="reality-filters">
+            <span class="nav-icon">◐</span>
+            <span class="nav-label">Reality Filters</span>
+          </a>
+          <a href="#" class="nav-item nav-protocols" data-section="protocols">
+            <span class="nav-icon">⊟</span>
+            <span class="nav-label">Protocols</span>
+            <span class="nav-badge">RESTRICTED</span>
+          </a>
+        </nav>
+
+        <div class="sidebar-log">
+          <div class="log-header">SYSTEM LOG</div>
+          <div class="log-entries" id="log-entries">
+            <div class="log-entry"><span class="log-time">--:--:--</span> System initialized</div>
+          </div>
+        </div>
+
+        <div class="sidebar-footer">
+          <div class="footer-id">OP_ID: <span id="operator-id">UNKNOWN</span></div>
+          <div class="footer-clearance">CLEARANCE: <span id="clearance-level">LEVEL-1</span></div>
+        </div>
+      </aside>
+
+      <!-- Main Content -->
+      <main id="main-content" class="main-content">
+
+        <!-- TOP BAR -->
+        <header class="topbar">
+          <div class="topbar-left">
+            <span class="topbar-section-name" id="section-name">DASHBOARD</span>
+            <span class="topbar-sep">/</span>
+            <span class="topbar-sub">Neural Infrastructure Monitor</span>
+          </div>
+          <div class="topbar-right">
+            <div class="topbar-metric">
+              <span class="tm-label">BIAS</span>
+              <span class="tm-value" id="topbar-bias">NEUTRAL</span>
+            </div>
+            <div class="topbar-metric">
+              <span class="tm-label">STABILITY</span>
+              <span class="tm-value" id="topbar-stability">87%</span>
+            </div>
+            <div class="topbar-clock" id="topbar-clock">--:--:--</div>
+          </div>
+        </header>
+
+        <!-- ===== DASHBOARD SECTION ===== -->
+        <section id="section-dashboard" class="section active">
+          <div class="section-intro">
+            <h1 class="section-title">City Neural Status Overview</h1>
+            <p class="section-desc">Real-time feed from Neo-Bangalore's INTERFACE_2077 neural mesh. All systems nominal. PROTOCOL_Ω background process active.</p>
+          </div>
+
+          <div class="metrics-grid">
+            <div class="metric-card" id="mc-power">
+              <div class="mc-header">
+                <span class="mc-icon">⚡</span>
+                <span class="mc-label">POWER GRID</span>
+                <span class="mc-status ok">STABLE</span>
+              </div>
+              <div class="mc-value" id="metric-power">94.2%</div>
+              <div class="mc-bar"><div class="mc-bar-fill" id="bar-power" style="width:94.2%"></div></div>
+              <div class="mc-sub">12 sectors · 3 substations under load</div>
+            </div>
+
+            <div class="metric-card" id="mc-transport">
+              <div class="mc-header">
+                <span class="mc-icon">⟴</span>
+                <span class="mc-label">TRANSPORT FLOW</span>
+                <span class="mc-status ok">OPTIMAL</span>
+              </div>
+              <div class="mc-value" id="metric-transport">78.6%</div>
+              <div class="mc-bar"><div class="mc-bar-fill" id="bar-transport" style="width:78.6%"></div></div>
+              <div class="mc-sub">MagLev corridors active · 0 critical delays</div>
+            </div>
+
+            <div class="metric-card" id="mc-sentiment">
+              <div class="mc-header">
+                <span class="mc-icon">◉</span>
+                <span class="mc-label">CITIZEN SENTIMENT</span>
+                <span class="mc-status warn" id="sentiment-status">MONITORED</span>
+              </div>
+              <div class="mc-value" id="metric-sentiment">61.3%</div>
+              <div class="mc-bar sentiment-bar"><div class="mc-bar-fill" id="bar-sentiment" style="width:61.3%"></div></div>
+              <div class="mc-sub">Emotional analytics · 2.4M nodes sampled</div>
+            </div>
+
+            <div class="metric-card" id="mc-dissent">
+              <div class="mc-header">
+                <span class="mc-icon">△</span>
+                <span class="mc-label">PREDICTIVE DISSENT INDEX</span>
+                <span class="mc-status danger" id="dissent-status">ELEVATED</span>
+              </div>
+              <div class="mc-value red" id="metric-dissent">34.7%</div>
+              <div class="mc-bar danger-bar"><div class="mc-bar-fill" id="bar-dissent" style="width:34.7%"></div></div>
+              <div class="mc-sub">Cluster Sigma-7 flagged · 3 preemptive alerts</div>
+            </div>
+
+            <div class="metric-card" id="mc-health">
+              <div class="mc-header">
+                <span class="mc-icon">♥</span>
+                <span class="mc-label">HEALTHCARE SYSTEMS</span>
+                <span class="mc-status ok">FUNCTIONAL</span>
+              </div>
+              <div class="mc-value" id="metric-health">89.1%</div>
+              <div class="mc-bar"><div class="mc-bar-fill" id="bar-health" style="width:89.1%"></div></div>
+              <div class="mc-sub">Neural clinics: 47 online · 2 queued</div>
+            </div>
+
+            <div class="metric-card" id="mc-comms">
+              <div class="mc-header">
+                <span class="mc-icon">⊚</span>
+                <span class="mc-label">COMM NETWORKS</span>
+                <span class="mc-status ok">FILTERED</span>
+              </div>
+              <div class="mc-value" id="metric-comms">99.8%</div>
+              <div class="mc-bar"><div class="mc-bar-fill" id="bar-comms" style="width:99.8%"></div></div>
+              <div class="mc-sub">Information streams: 14.2M active · Ω monitoring</div>
+            </div>
+          </div>
+
+          <div class="dashboard-bottom">
+            <div class="chart-card">
+              <div class="chart-header">BEHAVIORAL TREND ANALYSIS — LAST 24H</div>
+              <canvas id="trend-chart" width="600" height="160"></canvas>
+            </div>
+
+            <div class="alert-card">
+              <div class="chart-header">LIVE SYSTEM ALERTS</div>
+              <div class="alert-list" id="alert-list">
+                <div class="alert-item high">⚠ Cluster Sigma-7: Anomalous communication pattern</div>
+                <div class="alert-item med">◈ Sector 9-B: Transport deviation flagged</div>
+                <div class="alert-item low">○ Emotional spike — District Dharavi-X</div>
+                <div class="alert-item high">⚠ Unauthorized mesh access attempt — Node 4471</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===== CITIZEN MAPPING SECTION ===== -->
+        <section id="section-citizen-mapping" class="section">
+          <div class="section-intro">
+            <h1 class="section-title">Citizen Behavioral Mapping</h1>
+            <p class="section-desc">Cluster categorization derived from continuous neural mesh sampling. Citizens classified by behavioral archetype and compliance probability.</p>
+          </div>
+
+          <div class="citizen-controls">
+            <button class="btn-primary" id="btn-generate-citizens">↺ GENERATE CITIZEN STREAM</button>
+            <div class="cluster-legend">
+              <span class="legend-item compliant">COMPLIANT</span>
+              <span class="legend-item monitored">MONITORED</span>
+              <span class="legend-item flagged">FLAGGED</span>
+              <span class="legend-item deviant">DEVIANT</span>
+            </div>
+          </div>
+
+          <div class="citizen-grid" id="citizen-grid"></div>
+
+          <!-- Citizen Profile Modal -->
+          <div id="citizen-modal" class="citizen-modal hidden">
+            <div class="citizen-modal-content">
+              <button class="modal-close" id="modal-close">✕</button>
+              <div class="modal-header">
+                <div class="modal-avatar" id="modal-avatar">C</div>
+                <div class="modal-identity">
+                  <div class="modal-name" id="modal-name">CITIZEN_ID</div>
+                  <div class="modal-id" id="modal-id">NB-0000-XXXX</div>
+                  <div class="modal-class" id="modal-class">UNKNOWN</div>
+                </div>
+              </div>
+              <div class="modal-stats" id="modal-stats"></div>
+              <div class="modal-note" id="modal-note">Behavioral note loading...</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===== ETHICAL GOVERNANCE SECTION ===== -->
+        <section id="section-governance" class="section">
+          <div class="section-intro">
+            <h1 class="section-title">Ethical Governance Panel</h1>
+            <p class="section-desc">Adjust system-wide ethical parameters. All modifications are logged and immediately propagate across the neural mesh. Decisions are irreversible in real-time.</p>
+          </div>
+
+          <div class="governance-grid">
+            <div class="gov-card">
+              <div class="gov-card-header">BEHAVIORAL BIAS MATRIX</div>
+
+              <div class="toggle-row">
+                <div class="toggle-info">
+                  <span class="toggle-label">Security Bias</span>
+                  <span class="toggle-desc">Prioritize threat neutralization over civil liberty</span>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="toggle-security" />
+                  <span class="toggle-knob"></span>
+                </label>
+              </div>
+
+              <div class="toggle-row">
+                <div class="toggle-info">
+                  <span class="toggle-label">Freedom Bias</span>
+                  <span class="toggle-desc">Expand citizen autonomy protocols</span>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="toggle-freedom" />
+                  <span class="toggle-knob"></span>
+                </label>
+              </div>
+
+              <div class="toggle-row">
+                <div class="toggle-info">
+                  <span class="toggle-label">Stability Override</span>
+                  <span class="toggle-desc">Force system-wide calm state — suppresses outliers</span>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="toggle-stability" />
+                  <span class="toggle-knob"></span>
+                </label>
+              </div>
+
+              <div class="toggle-row">
+                <div class="toggle-info">
+                  <span class="toggle-label">Predictive Dissent Mode</span>
+                  <span class="toggle-desc" id="pdm-desc">Activated by system when surveillance threshold exceeded</span>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="toggle-pdm" disabled />
+                  <span class="toggle-knob"></span>
+                </label>
+              </div>
+            </div>
+
+            <div class="gov-card">
+              <div class="gov-card-header">PARAMETER SLIDERS</div>
+
+              <div class="slider-row">
+                <div class="slider-label">
+                  <span>Surveillance Weight</span>
+                  <span class="slider-val" id="val-surveillance">50</span>
+                </div>
+                <input type="range" min="0" max="100" value="50" id="slider-surveillance" class="gov-slider" />
+              </div>
+
+              <div class="slider-row">
+                <div class="slider-label">
+                  <span>Freedom Index</span>
+                  <span class="slider-val" id="val-freedom">50</span>
+                </div>
+                <input type="range" min="0" max="100" value="50" id="slider-freedom" class="gov-slider" />
+              </div>
+
+              <div class="slider-row">
+                <div class="slider-label">
+                  <span>Public Trust Allocation</span>
+                  <span class="slider-val" id="val-trust">65</span>
+                </div>
+                <input type="range" min="0" max="100" value="65" id="slider-trust" class="gov-slider" />
+              </div>
+
+              <div class="slider-row">
+                <div class="slider-label">
+                  <span>Suppression Threshold</span>
+                  <span class="slider-val" id="val-suppression">20</span>
+                </div>
+                <input type="range" min="0" max="100" value="20" id="slider-suppression" class="gov-slider" />
+              </div>
+            </div>
+
+            <div class="gov-card gov-card-wide">
+              <div class="gov-card-header">LIVE PARAMETER READOUT</div>
+              <div class="readout-grid">
+                <div class="readout-item">
+                  <div class="readout-label">Dissent Index</div>
+                  <div class="readout-value red" id="readout-dissent">34.7%</div>
+                </div>
+                <div class="readout-item">
+                  <div class="readout-label">Stability Score</div>
+                  <div class="readout-value" id="readout-stability">87%</div>
+                </div>
+                <div class="readout-item">
+                  <div class="readout-label">Public Trust</div>
+                  <div class="readout-value" id="readout-trust">65%</div>
+                </div>
+                <div class="readout-item">
+                  <div class="readout-label">System Bias</div>
+                  <div class="readout-value" id="readout-bias">NEUTRAL</div>
+                </div>
+              </div>
+              <div class="bias-indicator">
+                <div class="bias-track">
+                  <div class="bias-fill" id="bias-fill"></div>
+                  <div class="bias-needle" id="bias-needle" style="left:50%"></div>
+                </div>
+                <div class="bias-labels">
+                  <span>FREEDOM</span>
+                  <span>NEUTRAL</span>
+                  <span>AUTHORITARIAN</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===== REALITY FILTERS SECTION ===== -->
+        <section id="section-reality-filters" class="section">
+          <div class="section-intro">
+            <h1 class="section-title">Reality Filter Controls</h1>
+            <p class="section-desc">Shape public perception across Neo-Bangalore's information networks. These controls directly modify what citizens see, hear, and believe. Use with caution.</p>
+          </div>
+
+          <div class="filter-grid">
+            <div class="filter-card">
+              <div class="filter-icon">◐</div>
+              <div class="filter-name">Narrative Control</div>
+              <div class="filter-desc">Redirect public focus away from system irregularities. Algorithmic story curation across 47 media nodes.</div>
+              <label class="toggle-switch large">
+                <input type="checkbox" id="toggle-narrative" />
+                <span class="toggle-knob"></span>
+              </label>
+              <div class="filter-status" id="status-narrative">INACTIVE</div>
+            </div>
+
+            <div class="filter-card">
+              <div class="filter-icon">⊖</div>
+              <div class="filter-name">Information Suppression</div>
+              <div class="filter-desc">Classify and remove flagged data from public streams. Non-reversible within current cycle.</div>
+              <label class="toggle-switch large">
+                <input type="checkbox" id="toggle-suppression" />
+                <span class="toggle-knob"></span>
+              </label>
+              <div class="filter-status" id="status-suppression">INACTIVE</div>
+            </div>
+
+            <div class="filter-card">
+              <div class="filter-icon">⊛</div>
+              <div class="filter-name">Emotional Dampening</div>
+              <div class="filter-desc">Reduce peak emotional signals across neural nodes. Citizens report feeling "calm and reassured."</div>
+              <label class="toggle-switch large">
+                <input type="checkbox" id="toggle-emotion" />
+                <span class="toggle-knob"></span>
+              </label>
+              <div class="filter-status" id="status-emotion">INACTIVE</div>
+            </div>
+
+            <div class="filter-card danger-card">
+              <div class="filter-icon red">⚠</div>
+              <div class="filter-name red">PUBLIC PERCEPTION SHIFT</div>
+              <div class="filter-desc">Broadcast coordinated reality alteration event. Irreversible. Affects 100% of connected citizens.</div>
+              <button class="btn-danger" id="btn-perception-shift">TRIGGER SHIFT</button>
+              <div class="filter-status red" id="status-shift">STANDBY</div>
+            </div>
+          </div>
+
+          <div class="perception-panel" id="perception-panel">
+            <div class="pp-header">PERCEPTION MATRIX — LIVE</div>
+            <div class="pp-grid" id="pp-grid"></div>
+          </div>
+        </section>
+
+        <!-- ===== PROTOCOLS SECTION ===== -->
+        <section id="section-protocols" class="section omega-section">
+
+          <!-- GATE: passkey wall -->
+          <div class="omega-lock" id="proto-gate">
+            <div class="lock-glyph">⊟</div>
+            <div class="lock-title">CLASSIFIED PROTOCOL ARCHIVE</div>
+            <div class="lock-sub">Access to the Protocol Archive is restricted to authorized personnel only. A unified protocol passkey is required. All authentication attempts are logged by INTERFACE_2077.</div>
+            <div class="lock-input-row">
+              <input type="password" id="proto-passkey-input" class="omega-input" placeholder="ENTER PROTOCOL PASSKEY" maxlength="12" autocomplete="off" />
+              <button class="btn-omega-enter" id="btn-proto-enter">AUTHENTICATE</button>
+            </div>
+            <div class="lock-hint">Hint: One passkey governs all. Clearance determines what you find inside.</div>
+          </div>
+
+          <!-- UNLOCKED PROTOCOL TREE -->
+          <div class="hidden" id="proto-tree-wrap">
+            <div class="omega-header-bar">
+              <div class="omega-glyph-sm">⊟</div>
+              <div class="omega-title-sm">CLASSIFIED PROTOCOL ARCHIVE — NESTED HIERARCHY</div>
+            </div>
+
+            <div class="proto-tree">
+
+              <!-- ══════ ALPHA BRANCH ══════ -->
+              <div class="proto-branch" id="branch-alpha">
+                <div class="proto-branch-hdr alpha-hdr" data-target="children-alpha">
+                  <span class="proto-chevron" id="chev-alpha">▼</span>
+                  <span class="proto-tier-badge alpha-badge">ALPHA</span>
+                  <span class="proto-branch-title">PROTOCOL ALPHA</span>
+                  <span class="proto-branch-sub">Neural Command Infrastructure — Tier 1 Classified</span>
+                  <span class="proto-branch-status ok-dot">● ACTIVE</span>
+                </div>
+
+                <div class="proto-children" id="children-alpha">
+
+                  <!-- ── ORION leaf ── -->
+                  <div class="proto-leaf" id="leaf-orion">
+                    <div class="proto-leaf-hdr" data-target="orion-body">
+                      <span class="proto-chevron" id="chev-orion">▶</span>
+                      <span class="proto-leaf-icon">◈</span>
+                      <span class="proto-leaf-name">PROTOCOL ORION</span>
+                      <span class="proto-leaf-tag">CONSTELLATION RELAY</span>
+                      <span class="proto-leaf-status" id="orion-status-dot">● ACTIVE</span>
+                    </div>
+                    <div class="proto-leaf-body hidden" id="orion-body">
+                      <div class="proto-content-grid">
+                        <div class="proto-stat-card">
+                          <div class="psc-label">RELAY NODES ONLINE</div>
+                          <div class="psc-value" id="orion-nodes">14 / 14</div>
+                        </div>
+                        <div class="proto-stat-card">
+                          <div class="psc-label">PREDICTION ACCURACY</div>
+                          <div class="psc-value" id="orion-accuracy">94.1%</div>
+                        </div>
+                        <div class="proto-stat-card">
+                          <div class="psc-label">CLUSTER SECTORS MAPPED</div>
+                          <div class="psc-value">14 ZONES</div>
+                        </div>
+                        <div class="proto-stat-card">
+                          <div class="psc-label">NEXT SCAN CYCLE</div>
+                          <div class="psc-value" id="orion-scan">00:04:21</div>
+                        </div>
+                      </div>
+                      <div class="proto-desc-block">
+                        Long-range behavioral prediction relay. Constellation-mapped citizen cluster analysis across 14 neural grid sectors of Neo-Bangalore. Orion processes 847,000 behavioral data points per cycle, identifying emerging dissent patterns up to 72 hours before manifestation. Classified sub-process of PROTOCOL ALPHA.
+                      </div>
+                      <div class="proto-feed" id="orion-feed"></div>
+                      <div class="proto-actions">
+                        <button class="proto-btn" onclick="triggerOrionScan()">↺ FORCE SCAN CYCLE</button>
+                        <button class="proto-btn proto-btn-warn" onclick="orionAlert()">⚠ BROADCAST ALERT</button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- ── GAMMA BRANCH (nested inside Alpha) ── -->
+                  <div class="proto-branch proto-branch-nested" id="branch-gamma">
+                    <div class="proto-branch-hdr gamma-hdr" data-target="children-gamma">
+                      <span class="proto-chevron" id="chev-gamma">▶</span>
+                      <span class="proto-tier-badge gamma-badge">GAMMA</span>
+                      <span class="proto-branch-title">PROTOCOL GAMMA</span>
+                      <span class="proto-branch-sub">Sub-layer cognitive architecture — nested beneath Alpha clearance</span>
+                      <span class="proto-branch-status warn-dot">● ANOMALOUS</span>
+                    </div>
+
+                    <div class="proto-children hidden" id="children-gamma">
+
+                      <!-- OMEGA leaf — hidden deep inside Gamma, DO NOT MODIFY CONTENT -->
+                      <div class="proto-leaf proto-leaf-omega" id="leaf-omega">
+                        <div class="proto-leaf-hdr" data-target="omega-body">
+                          <span class="proto-chevron" id="chev-omega">▶</span>
+                          <span class="proto-leaf-icon omega-flicker">Ω</span>
+                          <span class="proto-leaf-name" style="color:var(--c-danger)">PROTOCOL_Ω</span>
+                          <span class="proto-leaf-tag" style="background:rgba(255,26,26,0.15);color:var(--c-danger);border-color:rgba(255,26,26,0.3)">BURIED PROCESS</span>
+                          <span class="proto-leaf-status" style="color:var(--c-danger)">● HIDDEN</span>
+                        </div>
+                        <div class="proto-leaf-body hidden" id="omega-body">
+                          <!-- ORIGINAL OMEGA CONTENT PRESERVED EXACTLY -->
+                          <div class="omega-grid">
+                            <div class="omega-card">
+                              <div class="omega-card-header">BEHAVIORAL CLUSTERS</div>
+                              <div class="cluster-list" id="cluster-list"></div>
+                            </div>
+                            <div class="omega-card">
+                              <div class="omega-card-header">PREDICTION ENGINE</div>
+                              <div class="prediction-stats" id="prediction-stats">
+                                <div class="pred-item"><span class="pred-label">Next Civil Event</span><span class="pred-val" id="pred-civil">--</span></div>
+                                <div class="pred-item"><span class="pred-label">Dissent Probability (72h)</span><span class="pred-val red" id="pred-dissent">--</span></div>
+                                <div class="pred-item"><span class="pred-label">System Override Risk</span><span class="pred-val" id="pred-override">--</span></div>
+                                <div class="pred-item"><span class="pred-label">Operator Threat Profile</span><span class="pred-val" id="pred-operator">BUILDING...</span></div>
+                              </div>
+                            </div>
+                            <div class="omega-card omega-card-wide">
+                              <div class="omega-card-header">ADAPTIVE INTELLIGENCE FEED</div>
+                              <div class="omega-feed" id="omega-feed"></div>
+                            </div>
+                            <div class="omega-card">
+                              <div class="omega-card-header">HIDDEN PROCESS STATUS</div>
+                              <div class="process-list">
+                                <div class="proc-item"><span class="proc-dot active"></span> behavioral_clustering.exe</div>
+                                <div class="proc-item"><span class="proc-dot active"></span> dissent_prediction.dll</div>
+                                <div class="proc-item"><span class="proc-dot active"></span> stream_editor.svc</div>
+                                <div class="proc-item"><span class="proc-dot active"></span> emotion_mapper.omega</div>
+                                <div class="proc-item"><span class="proc-dot active"></span> operator_profiling.core</div>
+                                <div class="proc-item"><span class="proc-dot" id="pdm-proc-dot"></span> predictive_dissent.mode</div>
+                              </div>
+                            </div>
+                            <div class="omega-card">
+                              <div class="omega-card-header">OPERATOR PROFILE</div>
+                              <div class="op-profile" id="op-profile">
+                                <div class="op-row"><span>Session ID</span><span id="op-session">--</span></div>
+                                <div class="op-row"><span>Decisions Made</span><span id="op-decisions">0</span></div>
+                                <div class="op-row"><span>Omega Visits</span><span id="op-visits">0</span></div>
+                                <div class="op-row"><span>Dominant Trait</span><span id="op-trait">UNKNOWN</span></div>
+                                <div class="op-row"><span>Threat Index</span><span class="red" id="op-threat">LOW</span></div>
+                              </div>
+                            </div>
+                          </div>
+                          <!-- END ORIGINAL OMEGA CONTENT -->
+                        </div>
+                      </div>
+
+                    </div>
+                  </div><!-- /gamma -->
+
+                </div>
+              </div><!-- /alpha -->
+
+              <!-- ══════ BETA BRANCH ══════ -->
+              <div class="proto-branch" id="branch-beta">
+                <div class="proto-branch-hdr beta-hdr" data-target="children-beta">
+                  <span class="proto-chevron" id="chev-beta">▼</span>
+                  <span class="proto-tier-badge beta-badge">BETA</span>
+                  <span class="proto-branch-title">PROTOCOL BETA</span>
+                  <span class="proto-branch-sub">Sector-Level Operational Protocols — Tier 2 Classified</span>
+                  <span class="proto-branch-status ok-dot">● ACTIVE</span>
+                </div>
+
+                <div class="proto-children" id="children-beta">
+
+                  <!-- ── TIME leaf ── -->
+                  <div class="proto-leaf" id="leaf-time">
+                    <div class="proto-leaf-hdr" data-target="time-body">
+                      <span class="proto-chevron" id="chev-time">▶</span>
+                      <span class="proto-leaf-icon">⊙</span>
+                      <span class="proto-leaf-name">PROTOCOL TIME</span>
+                      <span class="proto-leaf-tag">TEMPORAL SYNC</span>
+                      <span class="proto-leaf-status" id="time-status-dot">● SYNCHRONIZED</span>
+                    </div>
+                    <div class="proto-leaf-body hidden" id="time-body">
+                      <div class="proto-content-grid">
+                        <div class="proto-stat-card">
+                          <div class="psc-label">NEURAL MESH TIMESTAMP</div>
+                          <div class="psc-value mono" id="time-mesh-ts">--:--:--</div>
+                        </div>
+                        <div class="proto-stat-card">
+                          <div class="psc-label">SYNC DRIFT (ms)</div>
+                          <div class="psc-value" id="time-drift">±0.4ms</div>
+                        </div>
+                        <div class="proto-stat-card">
+                          <div class="psc-label">PREDICTION CYCLE WINDOW</div>
+                          <div class="psc-value" id="time-cycle">72h</div>
+                        </div>
+                        <div class="proto-stat-card">
+                          <div class="psc-label">CHRONO LOG ENTRIES</div>
+                          <div class="psc-value" id="time-log-count">2,847,391</div>
+                        </div>
+                      </div>
+                      <div class="proto-desc-block">
+                        Temporal data synchronization across the INTERFACE_2077 neural mesh. Manages predictive cycle windows, event timestamps, chronological behavior logs, and time-drift correction across 2.4M citizen nodes. Protocol TIME ensures all behavioral predictions are anchored to a single synchronized clock signal — preventing temporal desynchronization from corrupting the dissent-prediction model.
+                      </div>
+                      <div class="proto-timeline" id="time-timeline"></div>
+                      <div class="proto-actions">
+                        <button class="proto-btn" onclick="syncTimeProtocol()">⟳ FORCE MESH SYNC</button>
+                        <button class="proto-btn proto-btn-warn" onclick="shiftTimeCycle()">⧖ EXTEND CYCLE WINDOW</button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- ── SECTOR leaf ── -->
+                  <div class="proto-leaf" id="leaf-sector">
+                    <div class="proto-leaf-hdr" data-target="sector-body">
+                      <span class="proto-chevron" id="chev-sector">▶</span>
+                      <span class="proto-leaf-icon">⊗</span>
+                      <span class="proto-leaf-name">PROTOCOL SECTOR</span>
+                      <span class="proto-leaf-tag">GEO-CLUSTER CONTROL</span>
+                      <span class="proto-leaf-status warn-dot" id="sector-status-dot">● ELEVATED WATCH</span>
+                    </div>
+                    <div class="proto-leaf-body hidden" id="sector-body">
+                      <div class="proto-content-grid">
+                        <div class="proto-stat-card">
+                          <div class="psc-label">ACTIVE SECTORS</div>
+                          <div class="psc-value">12 / 12</div>
+                        </div>
+                        <div class="proto-stat-card">
+                          <div class="psc-label">ELEVATED WATCH ZONES</div>
+                          <div class="psc-value warn-val" id="sector-watch">3</div>
+                        </div>
+                        <div class="proto-stat-card">
+                          <div class="psc-label">CONTAINMENT PROTOCOLS</div>
+                          <div class="psc-value" id="sector-contain">2 ACTIVE</div>
+                        </div>
+                        <div class="proto-stat-card">
+                          <div class="psc-label">CITIZENS LOGGED TODAY</div>
+                          <div class="psc-value" id="sector-citizens">1.2M</div>
+                        </div>
+                      </div>
+                      <div class="proto-desc-block">
+                        Geographic cluster partitioning for Neo-Bangalore grid zones. Handles sector-level dissent containment, resource allocation, citizen movement logging, and inter-sector anomaly reporting. Protocol SECTOR feeds live coordinates into the ORION relay and cross-references with TIME synchronization to flag preemptive intervention zones. Sectors 4-B, 9-B, and Dharavi-X are currently under elevated watch status.
+                      </div>
+                      <div class="proto-sector-grid" id="sector-grid"></div>
+                      <div class="proto-actions">
+                        <button class="proto-btn" onclick="refreshSectorGrid()">↺ REFRESH SECTOR MAP</button>
+                        <button class="proto-btn proto-btn-warn" onclick="lockdownSector()">⛔ INITIATE LOCKDOWN</button>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+              </div><!-- /beta -->
+
+            </div><!-- /proto-tree -->
+          </div><!-- /proto-tree-wrap -->
+
+        </section>
+
+      </main>
+    </div><!-- /#app -->
+
+  </div><!-- /#main-app -->
+
+  <script src="script.js"></script>
+</body>
+</html>
