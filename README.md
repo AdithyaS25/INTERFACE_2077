@@ -29,13 +29,13 @@ This project is the **restricted internal control interface** that allows an ope
 ### ✅ 1. Operator Login System
 Only **5 authorized agents** can access the interface.
 
-| Agent ID | Role | Clearance |
-|--------|------|----------|
-| NX7K2 | Neural Infrastructure Commander | ALPHA |
-| R3V0X | Behavioral Analytics Director | ALPHA |
-| ZQ91A | Reality Filter Operator | BETA |
-| K4LYN | Citizen Cluster Analyst | BETA |
-| V8RNX | Omega Protocol Overseer | OMEGA |
+| Agent ID | Role                            | Login Passkey | Protocol Passkey |
+| -------- | ------------------------------- | ------------- | ---------------- |
+| `NX7K2`  | Neural Infrastructure Commander | `OMEGA-NX7`   | `w3r1q4e2`       |
+| `R3V0X`  | Behavioral Analytics Director   | `REV-0X9`     | `w3r1q4e2`       |
+| `ZQ91A`  | Reality Filter Operator         | `ZQ-VOID1`    | `w3r1q4e2`       |
+| `K4LYN`  | Citizen Cluster Analyst         | `KAL-4N7`     | `w3r1q4e2`       |
+| `V8RNX`  | Omega Protocol Overseer         | `VRN-X88`     | `w3r1q4e2`       |
 
 Login includes:
 - Agent ID validation
